@@ -2,25 +2,21 @@ package main
 
 import processing.core._
 
-class MembraneUnit(pApp: PApplet) {
+class MembraneUnit(pApp: PApplet) extends GameObject(pApp) {
   
-  private var _position = new PVector
-  private var _radius = 0.0f
-  private var _color = pApp.color(255, 0, 0)
+  private var _id = 0;
+
   
-  private var _velocity = new PVector
-  
-  
-  
-  
-  def draw {
+  override def draw {
     pApp.fill(_color)
     pApp.ellipse(_position.x, _position.y, _radius * 2, _radius * 2)
+    
+    pApp.fill(0, 255, 0)
+    pApp.textSize(20);
+    pApp.textAlign(PConstants.CENTER, PConstants.CENTER)
+    pApp.text("" + id, _position.x, _position.y)
   }
-  
-  def move {
-    _position.add(_velocity)
-  }
+
   
   def collidesWith(membraneUnit: MembraneUnit): Boolean = {
     membraneUnit.position.dist(_position) < membraneUnit.radius + _radius
@@ -35,22 +31,11 @@ class MembraneUnit(pApp: PApplet) {
                                        membraneUnit.position.y - position.y);
    membraneUnit.velocity.normalize();
   }
+
+  def id = _id
+  def id_=(value: Int) = _id = value
+
   
-  def radius = _radius
-  def radius_=(value: Float) = _radius = value
-  
-  def position = _position
-  def position_=(value: PVector) {
-    _position.x = value.x
-    _position.y = value.y
-  }
-  
-  
-  def velocity = _velocity
-  def velocity_=(value: PVector) {
-    _velocity.x = value.x
-    _velocity.y = value.y
-  }
   
   
 
