@@ -13,36 +13,118 @@ package main
 
 import processing.core._
 import scala.collection.mutable._
+import proteins.Protein
 
 class Cell(pApp: PApplet) {
 
-  private var _center = new PVector()
-  private var _membrane: Array[MembraneUnit] = _
-  private var _radius = 100.0f
+  private var _center = new PVector
+  private var _membrane: MutableList[MembraneUnit] = MutableList[MembraneUnit]()
+  private var _proteins: MutableList[Protein] = MutableList[Protein]()
+  private var _radius = 0.0f
   private var _membraneUnitRadius = 20.0f
-   
-
- 
-    
   
-  def construct {
+  
+  
+  /* 
+   * Testing Variables
+   */
+  private var _lastId = 0
+  
+  
+  private def contains(gameObject: GameObject): Boolean = (
+    gameObject.position.dist(center) < _radius + gameObject.radius - _membraneUnitRadius * 2
+  )
+  /*
+   * Orient the membranes cells around the center
+   */
+  private def orientMembrane {
+    var angle = 2.0f * Math.PI / _membrane.length
+    _radius = ((_membraneUnitRadius * _membrane.length) / Math.PI).toFloat
     
-    var membraneUnitCount = ((Math.PI * _radius) / (_membraneUnitRadius)).toInt
-    println("MembraneUnitCount: " + membraneUnitCount)
-    var angle = 2 * Math.PI / membraneUnitCount
-    
-    _membrane = Array.ofDim[MembraneUnit](membraneUnitCount)
-    for(i <- 0 until membraneUnitCount) {
-      _membrane(i) = new MembraneUnit(pApp)
+    // reposition membrane units
+    for(i <- 0 until _membrane.length) {
       _membrane(i).position = new PVector(
-                                          (_center.x + _radius * Math.cos(i*angle)).toFloat,
-                                          (_center.y + _radius * Math.sin(i*angle)).toFloat
-                                         )
-      _membrane(i).radius = _membraneUnitRadius
-      _membrane(i).id = i
+                                    (_center.x + _radius * Math.cos(i*angle)).toFloat,
+                                    (_center.y + _radius * Math.sin(i*angle)).toFloat
+                                 )
+    }    
+  }
+    
+  /*
+   * Grows the cell's membrane by count units.
+   */
+  def grow(count: Int) {
+    
+    // add the number of new units to the membrane
+    for(i <- 0 until count) {
+      _membrane :+= new MembraneUnit(pApp) {
+        radius = _membraneUnitRadius
+        id = _lastId
+      }
+      _lastId += 1
+    }
+    
+    orientMembrane
+  }
+  
+  
+  def collectProtein(proteins: Array[Protein]) {
+    // find all the protein in the cell
+    for(protein <- proteins) {
+      if(contains(protein)) {
+        _proteins :+= protein
+        protein.marked = true
+      }
+    }
+    
+  }
+  /*
+   * If the cell contains enough protein, it will grow.
+   */
+  def checkForGrowth(proteins: Array[Protein]) {
+
+    var inCell = MutableList[Protein]()
+    
+    // find all the protein in the cell
+    for(protein <- proteins) {
+      if(contains(protein)) {
+        inCell :+= protein
+        protein.marked = true
+      }
+    }
+    
+    // check if there is enough protein for cell growth
+    if(!inCell.isEmpty) {
+      grow(inCell.length)
+    }
+    
+  }
+  
+  def divide: Array[Cell] = {
+    if(_membrane.length >= 8) 
+    {
+      var cells = Array(new Cell(pApp), new Cell(pApp))
+      cells(0).grow(_membrane.length/2)
+      cells(1).grow(_membrane.length/2 + {
+        if(_membrane.length % 2 == 0) 0 else 1
+      })
+      
+      _membrane = MutableList[MembraneUnit]()
+      
+      cells(0).center = new PVector(center.x - _radius, center.y)
+      cells(1).center = new PVector(center.x + _radius, center.y)
+      
+      cells
+    } else {
+      null
     }
   }
   
+  /*
+   * This is meant to open and close the membrane visually when a protein collides with it.
+   * 
+   * TODO: I'm going to forgo this for a little while because its so difficult (10).
+   */
   def interact(protein: Protein) {
     // find the membrane units being collided with
     var collisionIndices = MutableList[Int]()
@@ -109,6 +191,11 @@ class Cell(pApp: PApplet) {
     for(i <- 0 until _membrane.length) {
       _membrane(i).draw
     }
+    _proteins.foreach {
+      e => {
+        e.draw
+      }
+    }
   }
   
   def move {
@@ -121,15 +208,38 @@ class Cell(pApp: PApplet) {
   
   def center = _center
   def center_=(value: PVector) {
+    var delta = new PVector(_center.x - value.x, _center.y - value.y)
+    
+    
     _center.x = value.x
     _center.y = value.y
+    
+    
+    
+    _proteins.foreach {
+      e => {
+        e.position.x -= delta.x 
+        e.position.y -= delta.y
+      }
+    }
+    orientMembrane
+    
+    
   }
   
   def membrane = _membrane
-  def membrane_=(value: Array[MembraneUnit]) {
+  def membrane_=(value: MutableList[MembraneUnit]) {
     _membrane = value
   }
   
+  
+  def membraneUnitRadius = _membraneUnitRadius
+  def membraneUnitRadius_=(value: Float) {
+    _membraneUnitRadius = value
+    for(membraneUnit <- membrane) {
+      membraneUnit.radius = value
+    }
+  }
   
   
   

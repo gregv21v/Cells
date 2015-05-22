@@ -5,32 +5,52 @@ package main
 
 import processing.core._
 import scala.collection.mutable._
+import scala.util.Random
+import proteins.Protein
 
 
 class World(pApp: PApplet) {
-  private var _cells = Array(new Cell(pApp))
-  private var _protein = new Protein(pApp)
-  
-  _cells(0).center = new PVector(pApp.width/2, pApp.height/2)
-  _cells(0).construct
-  _protein.velocity = new PVector(1, 1)
-  _protein.color = pApp.color(0, 0, 255)
-  _protein.position = new PVector(100, 100)
+  private var _cells = MutableList[Cell]()
+  private var _proteins = {
+    for(i <- 0 until 20) yield {
+      new Protein(pApp) {
+        var rand = new Random
+        position.x = rand.nextInt(pApp.width)
+        position.y = rand.nextInt(pApp.height)
+        color = pApp.color(0, 0, 255)
+      }
+    }
+  }
+
 
   
   
-  def collisions {
+  def interactions {
     //_cells.foreach { x => x.internalCollision }
     
     
     // protein colliding with cell
-    _cells(0).interact(_protein)
+    
+    _cells.foreach {
+      e => {
+        e.collectProtein(_proteins.toArray)
+      }
+    }
+    
+    _proteins = _proteins.filter { x => !x.marked }
+    
+    
+
   }
   
   
   def draw {
     
-    _protein.draw
+    _proteins.foreach {
+      e => {
+        e.draw 
+      }
+    }
     _cells.foreach {
       e => {
         e.draw
@@ -40,7 +60,11 @@ class World(pApp: PApplet) {
   
   
   def move {
-    _protein.move
+    _proteins.foreach {
+      e => {
+        e.move
+      }
+    }
     _cells.foreach {
       e => {
         e.move
@@ -51,8 +75,7 @@ class World(pApp: PApplet) {
   
   
   
-  def cells = _cells
-  def cells_=(value: Array[Cell]) {
-    _cells = value
+  def add(cell: Cell) {
+    _cells :+= cell
   }
 }
