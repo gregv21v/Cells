@@ -7,16 +7,18 @@ import processing.core._
 import scala.collection.mutable._
 import scala.util.Random
 import proteins.Protein
+import creatures._
 
 
 class World(pApp: PApplet) {
-  private var _cells = MutableList[Cell]()
+  private var _bounds = new Bounds(0, 0, 400, 400)
+  private var _creatures = MutableList[Creature]()
   private var _proteins = {
     for(i <- 0 until 20) yield {
       new Protein(pApp) {
         var rand = new Random
-        position.x = rand.nextInt(pApp.width)
-        position.y = rand.nextInt(pApp.height)
+        position.x = rand.nextInt(pApp.width/2 - 200)
+        position.y = rand.nextInt(pApp.height/2 - 200)
         color = pApp.color(0, 0, 255)
       }
     }
@@ -26,14 +28,11 @@ class World(pApp: PApplet) {
   
   
   def interactions {
-    //_cells.foreach { x => x.internalCollision }
+  
     
-    
-    // protein colliding with cell
-    
-    _cells.foreach {
+    _creatures.foreach {
       e => {
-        e.collectProtein(_proteins.toArray)
+        e.interact(_proteins.toArray)
       }
     }
     
@@ -51,7 +50,7 @@ class World(pApp: PApplet) {
         e.draw 
       }
     }
-    _cells.foreach {
+    _creatures.foreach {
       e => {
         e.draw
       }
@@ -65,7 +64,7 @@ class World(pApp: PApplet) {
         e.move
       }
     }
-    _cells.foreach {
+    _creatures.foreach {
       e => {
         e.move
       }
@@ -75,7 +74,7 @@ class World(pApp: PApplet) {
   
   
   
-  def add(cell: Cell) {
-    _cells :+= cell
+  def :+=(creature: Creature) {
+    _creatures :+= creature
   }
 }

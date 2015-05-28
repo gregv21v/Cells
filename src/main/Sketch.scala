@@ -42,9 +42,9 @@ object Sketch extends PApplet {
       case 'a' => keys(1) = true
       case 's' => keys(2) = true
       case 'd' => keys(3) = true
-      case 'q' => {
-        player.divide
-      }
+      case 'q' => player.reproduce
+      case 'e' => player.eat
+      case 'z' => player.cycleForms
       case  _  =>
     }
     

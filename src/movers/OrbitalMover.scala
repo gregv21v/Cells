@@ -1,5 +1,0 @@
-package movers
-
-class OrbitalMover {
-
-}

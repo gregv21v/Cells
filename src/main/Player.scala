@@ -1,55 +1,91 @@
 package main
 
 import processing.core._
+import creatures._
+import vectors._
 
 class Player(pApp: PApplet, world: World) {
   
-  private var _cell = new Cell(pApp) {
-    center.x = pApp.width/2
-    center.y = pApp.height/2
+  private var _forms = List(new Cell(pApp).asInstanceOf[Creature], new Snake(pApp).asInstanceOf[Creature])
+  
+  
+  for(form <- _forms) {
+    form.x = pApp.width/2
+    form.y = pApp.height/2
+    form.enabled = false
+    form.grow(5)
+    world :+= form
   }
+
+  
+  
+  private var _currentForm = 0
+  
+  
+  currentForm.enabled = true
   private var _movementSpeed = 10
   
-  _cell.grow(10)
-  world.add(_cell)
   
   
   
-  
-  
-  def divide {
-    var division = _cell.divide
+  def cycleForms {
+    currentForm.enabled = false
     
-    if(division != null) {
-      world.add(division(0))
-      world.add(division(1))
-      _cell = division(0)
-    }
+    _currentForm = (_currentForm + 1) % _forms.length
+    
+    currentForm.enabled = true
+    
+    
+  } 
+  
+  def eat {
+    _forms(_currentForm).eat
+  }
+  
+  def reproduce {
+    _forms(_currentForm).reproduce
+  }
+  
+  def grow {
+    _forms(_currentForm).grow(1) 
   }
   
   
   
   def movement(keys: Array[Boolean]) { // keys: wasd
+    for(form <- _forms)
+        form.velocity = new Vector
+    
+    // up
     if(keys(0)) {
-      _cell.center = new PVector(_cell.center.x, _cell.center.y - _movementSpeed)
+      for(form <- _forms)
+        form.velocity = new Vector(0, -_movementSpeed)
     }
     
+    // left
     if(keys(1)) {
-      _cell.center = new PVector(_cell.center.x - _movementSpeed, _cell.center.y)
+      for(form <- _forms)
+        form.velocity = new Vector(-_movementSpeed, 0)
     }
     
+    // down
     if(keys(2)) {
-      _cell.center = new PVector(_cell.center.x, _cell.center.y + _movementSpeed)
+      for(form <- _forms)
+        form.velocity = new Vector(0, _movementSpeed)
     }
     
+    // right
     if(keys(3)) {
-      _cell.center = new PVector(_cell.center.x + _movementSpeed, _cell.center.y)
+      for(form <- _forms)
+        form.velocity = new Vector(_movementSpeed, 0)
     }
-
   }
   
   
-  def cell = _cell
+  
+  
+  
+  def currentForm = _forms(_currentForm)
 
   
 
